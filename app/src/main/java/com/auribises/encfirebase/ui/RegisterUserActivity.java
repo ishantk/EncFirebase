@@ -15,9 +15,13 @@ import com.auribises.encfirebase.R;
 import com.auribises.encfirebase.model.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -39,7 +43,12 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
     FirebaseAuth auth;
     User user;
 
+    FirebaseFirestore firestore;
+    CollectionReference userCollection;
+
     ProgressDialog progressDialog;
+
+    String uid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,13 +60,50 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
         btnRegister.setOnClickListener(this);
 
         auth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
+        userCollection = firestore.collection("users");
+
         user = new User();
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setMessage("Please Wait...");
         progressDialog.setCancelable(false);
 
-        btnRegister.setText("Login");
+        //btnRegister.setText("Login");
+    }
+
+    void saveUser(){
+
+        userCollection.document(uid).set(user).addOnSuccessListener(this, new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Toast.makeText(RegisterUserActivity.this,"User Saved in DB",Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(RegisterUserActivity.this,HomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        })
+        .addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(RegisterUserActivity.this,"Error while saving User",Toast.LENGTH_LONG).show();
+            }
+        });
+
+        /*userCollection.add(user).addOnSuccessListener(this, new OnSuccessListener<DocumentReference>() {
+            @Override
+            public void onSuccess(DocumentReference documentReference) {
+                Toast.makeText(RegisterUserActivity.this,"User Saved in DB",Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(RegisterUserActivity.this,HomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        }).addOnFailureListener(this, new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(RegisterUserActivity.this,"Error while saving User",Toast.LENGTH_LONG).show();
+            }
+        });*/
     }
 
     void registerUser(){
@@ -70,12 +116,13 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()){
 
-                    String uid = task.getResult().getUser().getUid();
+                    uid = task.getResult().getUser().getUid();
                     // uid can be saved in the Firebase Database along with other details of user
 
                     Toast.makeText(RegisterUserActivity.this,user.name+" Registered Successfully !!",Toast.LENGTH_LONG).show();
                     Log.i("User","User Registered: "+uid);
 
+                    saveUser();
                 }
 
                 progressDialog.dismiss();
@@ -125,8 +172,8 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
         user.email = eTxtEmail.getText().toString().trim();
         user.password = eTxtPassword.getText().toString().trim();
 
-        //registerUser();
-        loginUser();
+        registerUser();
+        //loginUser();
 
     }
 }
