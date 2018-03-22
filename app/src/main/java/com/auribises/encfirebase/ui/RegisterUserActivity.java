@@ -81,14 +81,18 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
                 Intent intent = new Intent(RegisterUserActivity.this,HomeActivity.class);
                 startActivity(intent);
                 finish();
+                progressDialog.dismiss();
             }
         })
         .addOnFailureListener(this, new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(RegisterUserActivity.this,"Error while saving User",Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
             }
         });
+
+
 
         /*userCollection.add(user).addOnSuccessListener(this, new OnSuccessListener<DocumentReference>() {
             @Override
@@ -125,7 +129,7 @@ public class RegisterUserActivity extends AppCompatActivity implements View.OnCl
                     saveUser();
                 }
 
-                progressDialog.dismiss();
+
             }
         }).addOnFailureListener(this,new OnFailureListener() {
             @Override
