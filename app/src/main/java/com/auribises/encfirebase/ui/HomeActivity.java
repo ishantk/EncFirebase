@@ -3,14 +3,19 @@ package com.auribises.encfirebase.ui;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.auribises.encfirebase.R;
+import com.auribises.encfirebase.adapter.UserAdapter;
+import com.auribises.encfirebase.listener.RecyclerAdapterClickListener;
 import com.auribises.encfirebase.model.Address;
 import com.auribises.encfirebase.model.Song;
 import com.auribises.encfirebase.model.User;
+import com.firebase.ui.firestore.FirestoreRecyclerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
@@ -24,12 +29,21 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 
-public class HomeActivity extends AppCompatActivity {
+import butterknife.BindView;
+
+public class HomeActivity extends AppCompatActivity implements RecyclerAdapterClickListener{
 
     FirebaseFirestore firestore;
     FirebaseAuth auth;
 
     String uid;
+
+    RecyclerView recyclerView;
+    LinearLayoutManager linearLayoutManager;
+
+    UserAdapter userAdapter;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +54,12 @@ public class HomeActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
 
         uid = auth.getCurrentUser().getUid();
+
+        recyclerView = findViewById(R.id.recyclerView);
+
+        linearLayoutManager = new LinearLayoutManager(this);
+
+        recyclerView.setLayoutManager(linearLayoutManager);
 
         /*firestore.collection("users").document(uid).delete().addOnSuccessListener(new OnSuccessListener<Void>() {
             @Override
@@ -78,7 +98,7 @@ public class HomeActivity extends AppCompatActivity {
 
         Query query = firestore.collection("users").orderBy("name", Query.Direction.ASCENDING);
 
-        query.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
+        /*query.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
             @Override
             public void onEvent(QuerySnapshot documentSnapshots, FirebaseFirestoreException e) {
                 for(DocumentSnapshot documentSnapshot : documentSnapshots){
@@ -88,7 +108,19 @@ public class HomeActivity extends AppCompatActivity {
                     Log.i("User","Name: "+user.name+" - Email: "+user.email);
                 }
             }
-        });
+        });*/
+
+        FirestoreRecyclerOptions<User> options = new FirestoreRecyclerOptions.Builder<User>()
+                                                    .setQuery(query, User.class)
+                                                    .build();
+
+        userAdapter = new UserAdapter(options);
+        userAdapter.setRecyclerAdapterClickListener(this);
+
+        userAdapter.startListening();
+
+        recyclerView.setAdapter(userAdapter);
+
 
     }
 
@@ -118,5 +150,10 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRecyclerAdapterClicked(int position) {
+
     }
 }
